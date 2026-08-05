@@ -2,6 +2,7 @@ import { useState } from "react";
 import { X, ListPlus, Trash2, Plus } from "lucide-react";
 import { cn } from "../utils/cn";
 import { MediaImage } from "./MediaImage";
+import { useLockBodyScroll } from "../hooks/useLockBodyScroll";
 import type { Review, UserList } from "../types";
 
 interface ListsDrawerProps {
@@ -41,6 +42,8 @@ export function ListsDrawer({
   const [newListDesc, setNewListDesc] = useState("");
   const [selectedGradient, setSelectedGradient] = useState(0);
 
+  useLockBodyScroll(isOpen);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newListName.trim()) return;
@@ -61,7 +64,7 @@ export function ListsDrawer({
 
       <div
         className={cn(
-          "fixed top-0 right-0 h-full w-full sm:w-[28rem] z-[70] glass-strong shadow-2xl transform transition-transform duration-300 ease-out",
+          "fixed top-0 right-0 h-full w-full sm:w-[28rem] z-[70] glass-strong shadow-2xl transform transition-transform duration-300 ease-out overscroll-contain",
           isOpen ? "translate-x-0" : "translate-x-full"
         )}
       >

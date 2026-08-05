@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { X, Share2, MessageCircle, Copy, Check, Star } from "lucide-react";
 import { MediaImage } from "./MediaImage";
+import { useLockBodyScroll } from "../hooks/useLockBodyScroll";
 import type { Review } from "../types";
 
 interface ShareCardProps {
@@ -17,6 +18,8 @@ const TwitterIcon = () => (
 
 export function ShareCard({ review, isOpen, onClose }: ShareCardProps) {
   const [copied, setCopied] = useState(false);
+
+  useLockBodyScroll(isOpen);
 
   if (!isOpen || !review) return null;
 
@@ -44,8 +47,15 @@ export function ShareCard({ review, isOpen, onClose }: ShareCardProps) {
   };
 
   return (
-    <div className="fixed inset-0 z-[90] flex items-center justify-center p-4 modal-overlay modal-overlay-animate">
-      <div className="w-full max-w-md bg-white dark:bg-gray-900 rounded-3xl shadow-2xl overflow-hidden modal-animate border border-white/20">
+    <div
+      className="fixed inset-0 z-[90] flex items-center justify-center p-4 modal-overlay modal-overlay-animate bg-black/40 backdrop-blur-xs"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) {
+          onClose();
+        }
+      }}
+    >
+      <div className="w-full max-w-md bg-white dark:bg-gray-900 rounded-3xl shadow-2xl overflow-hidden modal-animate border border-white/20 overscroll-contain">
         {/* Card Header with real artwork image */}
         <div className="relative h-44 bg-gray-950 overflow-hidden">
           <MediaImage

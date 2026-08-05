@@ -28,6 +28,12 @@ export interface Review {
   embedUrl?: string;
   streamingOffers?: StreamingOffer[];
   imageUrl?: string;
+  releaseDate?: string;
+  country?: string;
+  language?: string;
+  director?: string;
+  production?: string;
+  budget?: string;
 }
 
 export interface UserReview {

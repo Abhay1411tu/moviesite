@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
-import { X, Trophy, Star, Bookmark, Heart, MessageSquare, Award, Calendar, ListPlus, LogOut, Edit2, Check, Film, Tv, Music, Mic2 } from "lucide-react";
+import { X, Trophy, Star, Bookmark, Heart, MessageSquare, Award, Calendar, ListPlus, LogOut, Edit2, Check, Film, Tv, Music, Mic2, Trash2 } from "lucide-react";
 import { cn } from "../utils/cn";
 import { useAuth } from "../hooks/useAuth";
+import { useLockBodyScroll } from "../hooks/useLockBodyScroll";
 import { MediaImage } from "./MediaImage";
 import type { UserReview, Review, DiaryEntry, UserList } from "../types";
 
@@ -14,6 +15,11 @@ interface ProfileModalProps {
   savedIds: Set<number>;
   diary: DiaryEntry[];
   lists: UserList[];
+  onDeleteUserReview?: (id: number) => void;
+  onRemoveLike?: (id: number) => void;
+  onRemoveSave?: (id: number) => void;
+  onRemoveDiary?: (id: number) => void;
+  onDeleteList?: (id: string) => void;
 }
 
 const avatarGradients = [
@@ -27,13 +33,29 @@ const avatarGradients = [
 
 type ActivityTab = "reviews" | "liked" | "saved" | "diary" | "lists";
 
-export function ProfileModal({ isOpen, onClose, reviews, userReviews, likedIds, savedIds, diary, lists }: ProfileModalProps) {
+export function ProfileModal({
+  isOpen,
+  onClose,
+  reviews,
+  userReviews,
+  likedIds,
+  savedIds,
+  diary,
+  lists,
+  onDeleteUserReview,
+  onRemoveLike,
+  onRemoveSave,
+  onRemoveDiary,
+  onDeleteList,
+}: ProfileModalProps) {
   const { user, logout, updateProfile } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [editUsername, setEditUsername] = useState("");
   const [editBio, setEditBio] = useState("");
   const [avatarIndex, setAvatarIndex] = useState(0);
   const [activeTab, setActiveTab] = useState<ActivityTab>("reviews");
+
+  useLockBodyScroll(isOpen);
 
   useEffect(() => {
     if (user) {
@@ -111,7 +133,18 @@ export function ProfileModal({ isOpen, onClose, reviews, userReviews, likedIds, 
             <div key={review.id} className="glass rounded-2xl p-4">
               <div className="flex items-center justify-between mb-1">
                 <span className="font-bold text-gray-900 dark:text-gray-100 text-sm">{review.author}</span>
-                <span className="text-xs text-gray-500 dark:text-gray-400">{review.date}</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-gray-500 dark:text-gray-400">{review.date}</span>
+                  {onDeleteUserReview && (
+                    <button
+                      onClick={() => onDeleteUserReview(review.id)}
+                      className="p-1.5 rounded-lg text-gray-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-colors"
+                      title="Delete review"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
               </div>
               <div className="flex items-center gap-1 mb-2">
                 {[1, 2, 3, 4, 5].map((star) => (
@@ -135,7 +168,14 @@ export function ProfileModal({ isOpen, onClose, reviews, userReviews, likedIds, 
       if (likedReviews.length === 0) return <EmptyState message="No liked titles yet." />;
       return (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {likedReviews.map((review) => <ReviewItem key={review.id} review={review} />)}
+          {likedReviews.map((review) => (
+            <ReviewItem
+              key={review.id}
+              review={review}
+              onRemove={onRemoveLike ? () => onRemoveLike(review.id) : undefined}
+              removeTitle="Unlike title"
+            />
+          ))}
         </div>
       );
     }
@@ -144,7 +184,14 @@ export function ProfileModal({ isOpen, onClose, reviews, userReviews, likedIds, 
       if (savedReviews.length === 0) return <EmptyState message="No saved titles yet." />;
       return (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {savedReviews.map((review) => <ReviewItem key={review.id} review={review} />)}
+          {savedReviews.map((review) => (
+            <ReviewItem
+              key={review.id}
+              review={review}
+              onRemove={onRemoveSave ? () => onRemoveSave(review.id) : undefined}
+              removeTitle="Remove from watchlist"
+            />
+          ))}
         </div>
       );
     }
@@ -178,6 +225,15 @@ export function ProfileModal({ isOpen, onClose, reviews, userReviews, likedIds, 
                       <span className="text-xs font-bold text-amber-700 dark:text-amber-400">{entry.rating}</span>
                     </div>
                   )}
+                  {onRemoveDiary && (
+                    <button
+                      onClick={() => onRemoveDiary(entry.id)}
+                      className="p-1.5 rounded-lg text-gray-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-colors"
+                      title="Remove from diary"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  )}
                 </div>
               );
             })}
@@ -191,14 +247,25 @@ export function ProfileModal({ isOpen, onClose, reviews, userReviews, likedIds, 
         <div className="space-y-3">
           {safeLists.map((list) => (
             <div key={list.id} className="glass rounded-2xl p-4">
-              <div className="flex items-center gap-3 mb-2">
-                <div className={cn("h-10 w-10 rounded-xl bg-gradient-to-br flex items-center justify-center text-white", list.gradient)}>
-                  <ListPlus className="w-5 h-5" />
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-3">
+                  <div className={cn("h-10 w-10 rounded-xl bg-gradient-to-br flex items-center justify-center text-white", list.gradient)}>
+                    <ListPlus className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <div className="font-bold text-gray-900 dark:text-gray-100 text-sm">{list.name}</div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400">{list.reviewIds.length} titles</div>
+                  </div>
                 </div>
-                <div>
-                  <div className="font-bold text-gray-900 dark:text-gray-100 text-sm">{list.name}</div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400">{list.reviewIds.length} titles</div>
-                </div>
+                {onDeleteList && (
+                  <button
+                    onClick={() => onDeleteList(list.id)}
+                    className="p-1.5 rounded-lg text-gray-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-colors"
+                    title="Delete list"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                )}
               </div>
               {list.description && (
                 <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">{list.description}</p>
@@ -223,8 +290,15 @@ export function ProfileModal({ isOpen, onClose, reviews, userReviews, likedIds, 
   };
 
   return (
-    <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 modal-overlay modal-overlay-animate">
-      <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-3xl glass-strong shadow-2xl modal-animate">
+    <div
+      className="fixed inset-0 z-[70] flex items-center justify-center p-4 modal-overlay modal-overlay-animate bg-black/40 backdrop-blur-xs"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) {
+          onClose();
+        }
+      }}
+    >
+      <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-3xl glass-strong shadow-2xl modal-animate overscroll-contain">
         <div className="relative">
           <div className="h-32 bg-gradient-to-r from-coral/80 via-violet/80 to-teal/80" />
           <button
@@ -402,7 +476,15 @@ function EmptyState({ message }: { message: string }) {
   );
 }
 
-function ReviewItem({ review }: { review: Review }) {
+function ReviewItem({
+  review,
+  onRemove,
+  removeTitle,
+}: {
+  review: Review;
+  onRemove?: () => void;
+  removeTitle?: string;
+}) {
   return (
     <div className="glass rounded-2xl p-3 flex gap-3 items-center">
       <div className="h-16 w-12 rounded-xl overflow-hidden bg-gray-900 flex-shrink-0 shadow-sm border border-white/20">
@@ -423,6 +505,15 @@ function ReviewItem({ review }: { review: Review }) {
           <span className="text-xs font-bold text-amber-700 dark:text-amber-400">{review.rating}</span>
         </div>
       </div>
+      {onRemove && (
+        <button
+          onClick={onRemove}
+          className="p-1.5 rounded-lg text-gray-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-colors"
+          title={removeTitle || "Remove"}
+        >
+          <Trash2 className="w-4 h-4" />
+        </button>
+      )}
     </div>
   );
 }

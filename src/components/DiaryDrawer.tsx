@@ -1,6 +1,7 @@
 import { X, Calendar, Eye, Star, Trash2, Film, Tv, Music, Mic2 } from "lucide-react";
 import { cn } from "../utils/cn";
 import { MediaImage } from "./MediaImage";
+import { useLockBodyScroll } from "../hooks/useLockBodyScroll";
 import type { Review, DiaryEntry } from "../types";
 
 interface DiaryDrawerProps {
@@ -14,6 +15,8 @@ interface DiaryDrawerProps {
 }
 
 export function DiaryDrawer({ isOpen, onClose, diary, reviews, onRemove, onReviewClick, onRate }: DiaryDrawerProps) {
+  useLockBodyScroll(isOpen);
+
   const categoryIcons: Record<string, React.ReactNode> = {
     Movies: <Film className="w-3.5 h-3.5" />,
     Series: <Tv className="w-3.5 h-3.5" />,
@@ -32,7 +35,7 @@ export function DiaryDrawer({ isOpen, onClose, diary, reviews, onRemove, onRevie
 
       <div
         className={cn(
-          "fixed top-0 right-0 h-full w-full sm:w-96 z-[70] glass-strong shadow-2xl transform transition-transform duration-300 ease-out",
+          "fixed top-0 right-0 h-full w-full sm:w-96 z-[70] glass-strong shadow-2xl transform transition-transform duration-300 ease-out overscroll-contain",
           isOpen ? "translate-x-0" : "translate-x-full"
         )}
       >

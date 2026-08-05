@@ -194,7 +194,7 @@ export function Collections({ onReviewClick, onViewAllCollections }: Collections
           </div>
           <button
             onClick={onViewAllCollections}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-coral text-white hover:bg-rose-600 font-extrabold text-sm transition-all shadow-md active:scale-95 border border-coral"
+            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gray-900 dark:bg-white text-white dark:text-gray-900 hover:bg-gray-800 dark:hover:bg-gray-100 font-extrabold text-sm transition-colors shadow-md active:scale-95"
           >
             View all collections
             <ArrowRight className="w-4 h-4" />

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useLockBodyScroll } from "../hooks/useLockBodyScroll";
 import {
   X,
   Star,
@@ -35,6 +36,7 @@ interface ReviewModalProps {
   onToggleDiary?: (id: number) => void;
   onAddToList?: (reviewId: number) => void;
   onRequiresAuth?: () => void;
+  onTagClick?: (tag: string) => void;
 }
 
 const providerNames: Record<string, string> = {
@@ -81,6 +83,7 @@ export function ReviewModal({
   onToggleDiary,
   onAddToList,
   onRequiresAuth,
+  onTagClick,
 }: ReviewModalProps) {
   const { user, isLoggedIn } = useAuth();
   const [userReviews, setUserReviews] = useState<UserReview[]>(SAMPLE_USER_REVIEWS);
@@ -90,16 +93,7 @@ export function ReviewModal({
   const [showMedia, setShowMedia] = useState(false);
   const [showShare, setShowShare] = useState(false);
 
-  useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
-    }
-    return () => {
-      document.body.style.overflow = "";
-    };
-  }, [isOpen]);
+  useLockBodyScroll(isOpen);
 
   useEffect(() => {
     if (review) {
@@ -137,8 +131,15 @@ export function ReviewModal({
   const hasMedia = !!review.trailerUrl;
 
   return (
-    <div className="fixed inset-0 z-[70] flex items-center justify-center p-3 sm:p-4 modal-overlay modal-overlay-animate">
-      <div className="relative w-full max-w-5xl max-h-[92vh] overflow-y-auto rounded-3xl glass-strong shadow-2xl modal-animate border border-white/40 dark:border-white/10">
+    <div
+      className="fixed inset-0 z-[70] flex items-center justify-center p-3 sm:p-4 modal-overlay modal-overlay-animate bg-black/40 backdrop-blur-xs"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) {
+          onClose();
+        }
+      }}
+    >
+      <div className="relative w-full max-w-5xl max-h-[92vh] overflow-y-auto rounded-3xl glass-strong shadow-2xl modal-animate border border-white/40 dark:border-white/10 overscroll-contain">
         <button
           onClick={onClose}
           className="absolute top-4 right-4 z-20 p-2.5 rounded-full bg-black/50 hover:bg-black/80 text-white transition-colors border border-white/20 shadow-lg"
@@ -258,10 +259,15 @@ export function ReviewModal({
                   </div>
                 </div>
 
-                {/* Description */}
+                {/* Storyline */}
                 <div className="mb-6">
-                  <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-2">Synopsis & Review</h3>
-                  <p className="text-gray-700 dark:text-gray-200 leading-relaxed text-base sm:text-lg">{review.description}</p>
+                  <h3 className="text-base font-bold text-gray-900 dark:text-gray-100 mb-2 flex items-center gap-2">
+                    <span className="inline-block w-1 h-4 rounded-full bg-coral"></span>
+                    Storyline
+                  </h3>
+                  <p className="text-gray-700 dark:text-gray-200 leading-relaxed text-sm sm:text-base">
+                    {review.description || review.excerpt}
+                  </p>
                 </div>
               </div>
 
@@ -309,24 +315,116 @@ export function ReviewModal({
           )}
 
           {/* Tags & Cast */}
-          <div className="mb-8 p-5 rounded-2xl glass border border-white/60 dark:border-white/10">
-            <h3 className="text-base font-bold text-gray-900 dark:text-gray-100 mb-3">Tags & Key Details</h3>
-            <div className="flex flex-wrap gap-2 mb-3">
-              {review.tags.map((tag) => (
-                <span
-                  key={tag}
-                  className="px-3 py-1 rounded-lg bg-white/70 dark:bg-white/10 text-xs font-medium text-gray-700 dark:text-gray-300 border border-white/60 dark:border-white/10"
-                >
-                  {tag}
-                </span>
-              ))}
+          <div className="mb-8 p-5 rounded-2xl glass border border-white/60 dark:border-white/10 space-y-5">
+            {/* Tags */}
+            <div>
+              <h3 className="text-sm font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">Genres & Tags</h3>
+              <div className="flex flex-wrap gap-2">
+                {review.tags.map((tag) => (
+                  <button
+                    key={tag}
+                    onClick={() => {
+                      onTagClick?.(tag);
+                      onClose();
+                    }}
+                    className="group px-3 py-1.5 rounded-lg bg-white/70 dark:bg-white/10 text-xs font-semibold text-gray-700 dark:text-gray-300 border border-white/60 dark:border-white/10 hover:bg-violet-600 hover:text-white hover:border-violet-600 dark:hover:bg-violet-600 dark:hover:border-violet-500 transition-all shadow-sm active:scale-95 cursor-pointer"
+                  >
+                    <span className="opacity-60 group-hover:opacity-100 transition-opacity">#</span>{tag}
+                  </button>
+                ))}
+              </div>
+              <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-2">Click a tag to discover more {review.category.toLowerCase()} like this</p>
             </div>
-            {review.cast && (
-              <p className="text-sm text-gray-600 dark:text-gray-300">
-                <span className="font-semibold text-gray-900 dark:text-gray-100">Cast / Creators:</span>{" "}
-                {review.cast.join(", ")}
-              </p>
+
+            {/* Full Cast / Creators */}
+            {review.cast && review.cast.length > 0 && (
+              <div>
+                <h3 className="text-sm font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">
+                  {review.category === "Movies" || review.category === "Series" ? "Full Cast" :
+                   review.category === "Songs" ? "Artists & Collaborators" : "Hosts & Creators"}
+                </h3>
+                <div className="flex flex-wrap gap-2">
+                  {review.cast.map((name) => (
+                    <div
+                      key={name}
+                      className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-violet-500/10 dark:bg-violet-500/20 border border-violet-500/30 text-violet-950 dark:text-violet-200 shadow-sm hover:bg-violet-500/20 dark:hover:bg-violet-500/30 transition-colors"
+                    >
+                      <div className="h-6 w-6 rounded-full bg-gradient-to-tr from-violet-600 to-indigo-500 flex items-center justify-center text-white text-[10px] font-black flex-shrink-0 shadow-xs">
+                        {name.charAt(0)}
+                      </div>
+                      <span className="text-xs font-extrabold whitespace-nowrap">{name}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
             )}
+            {/* Production & Technical Details */}
+            <div className="pt-2 border-t border-gray-200/60 dark:border-white/10">
+              <h3 className="text-sm font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">
+                {review.category === "Movies" || review.category === "Series" ? "Production & Release Details" :
+                 review.category === "Songs" ? "Track & Release Details" : "Show & Release Details"}
+              </h3>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                <div className="p-3 rounded-xl bg-gray-100/80 dark:bg-white/5 border border-gray-200/60 dark:border-white/5">
+                  <div className="text-[10px] font-bold text-gray-400 dark:text-gray-400 uppercase tracking-wider">Release Date</div>
+                  <div className="text-xs font-extrabold text-gray-900 dark:text-gray-100 mt-0.5">
+                    {review.releaseDate || `${review.year}`}
+                  </div>
+                </div>
+
+                <div className="p-3 rounded-xl bg-gray-100/80 dark:bg-white/5 border border-gray-200/60 dark:border-white/5">
+                  <div className="text-[10px] font-bold text-gray-400 dark:text-gray-400 uppercase tracking-wider">Country of Origin</div>
+                  <div className="text-xs font-extrabold text-gray-900 dark:text-gray-100 mt-0.5">
+                    {review.country || (review.category === "Songs" && review.creator.includes("Bad Bunny") ? "Puerto Rico" : "United States")}
+                  </div>
+                </div>
+
+                <div className="p-3 rounded-xl bg-gray-100/80 dark:bg-white/5 border border-gray-200/60 dark:border-white/5">
+                  <div className="text-[10px] font-bold text-gray-400 dark:text-gray-400 uppercase tracking-wider">Language</div>
+                  <div className="text-xs font-extrabold text-gray-900 dark:text-gray-100 mt-0.5">
+                    {review.language || (review.title.includes("Godzilla Minus One") ? "Japanese" : review.title.includes("Parasite") ? "Korean" : review.title.includes("Monaco") ? "Spanish" : "English")}
+                  </div>
+                </div>
+
+                <div className="p-3 rounded-xl bg-gray-100/80 dark:bg-white/5 border border-gray-200/60 dark:border-white/5">
+                  <div className="text-[10px] font-bold text-gray-400 dark:text-gray-400 uppercase tracking-wider">
+                    {review.category === "Movies" || review.category === "Series" ? "Director" :
+                     review.category === "Songs" ? "Producer / Creator" : "Host / Director"}
+                  </div>
+                  <div className="text-xs font-extrabold text-gray-900 dark:text-gray-100 mt-0.5 truncate">
+                    {review.director || review.creator}
+                  </div>
+                </div>
+
+                <div className="p-3 rounded-xl bg-gray-100/80 dark:bg-white/5 border border-gray-200/60 dark:border-white/5">
+                  <div className="text-[10px] font-bold text-gray-400 dark:text-gray-400 uppercase tracking-wider">
+                    {review.category === "Movies" || review.category === "Series" ? "Production Studio" :
+                     review.category === "Songs" ? "Record Label" : "Network / Publisher"}
+                  </div>
+                  <div className="text-xs font-extrabold text-gray-900 dark:text-gray-100 mt-0.5 truncate">
+                    {review.production || (
+                      review.category === "Movies" ? "Warner Bros. / Universal / A24" :
+                      review.category === "Series" ? "HBO / Netflix Original" :
+                      review.category === "Songs" ? "Universal Music Group" : "Spotify Studios"
+                    )}
+                  </div>
+                </div>
+
+                <div className="p-3 rounded-xl bg-gray-100/80 dark:bg-white/5 border border-gray-200/60 dark:border-white/5">
+                  <div className="text-[10px] font-bold text-gray-400 dark:text-gray-400 uppercase tracking-wider">
+                    {review.category === "Movies" || review.category === "Series" ? "Estimated Budget" :
+                     review.category === "Songs" ? "Production Budget" : "Sponsorship / Value"}
+                  </div>
+                  <div className="text-xs font-extrabold text-amber-600 dark:text-amber-400 mt-0.5">
+                    {review.budget || (
+                      review.category === "Movies" ? "$100M - $190M" :
+                      review.category === "Series" ? "$10M - $15M / Ep" :
+                      review.category === "Songs" ? "$150K - $500K" : "$250K / Ep"
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* User reviews */}
@@ -429,7 +527,7 @@ export function ReviewModal({
                 <button
                   type="submit"
                   disabled={!isLoggedIn}
-                  className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-coral to-rose-500 text-white text-sm font-semibold shadow-lg hover:shadow-coral/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-6 py-2.5 rounded-xl bg-gray-900 dark:bg-white text-white dark:text-gray-900 font-semibold hover:bg-gray-800 dark:hover:bg-gray-100 transition-colors shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isLoggedIn ? "Post Review" : "Sign In to Post"}
                 </button>

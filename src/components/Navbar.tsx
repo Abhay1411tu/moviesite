@@ -28,6 +28,7 @@ interface NavbarProps {
   onDiaryOpen: () => void;
   onListsOpen: () => void;
   onAuthOpen: () => void;
+  onRankingsOpen?: () => void;
 }
 
 export function Navbar({
@@ -41,6 +42,7 @@ export function Navbar({
   onDiaryOpen,
   onListsOpen,
   onAuthOpen,
+  onRankingsOpen,
 }: NavbarProps) {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -87,7 +89,7 @@ export function Navbar({
     { label: "Series", href: "#reviews" },
     { label: "Songs", href: "#reviews" },
     { label: "Podcasts", href: "#reviews" },
-    { label: "Leaderboard", href: "#leaderboard" },
+    { label: "Rankings", href: "#leaderboard" },
   ];
 
   return (
@@ -111,8 +113,8 @@ export function Navbar({
             )}
 
             <a href="#" className="flex items-center gap-2 group">
-              <div className="relative flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-xl bg-gradient-to-br from-coral/85 to-violet/85 text-white shadow-md shadow-violet/15 group-hover:scale-105 transition-transform">
-                <Play className="h-4 w-4 sm:h-5 sm:w-5 fill-white" />
+              <div className="relative flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-xl bg-gray-900 dark:bg-white text-white dark:text-gray-900 shadow-md group-hover:scale-105 transition-transform">
+                <Play className="h-4 w-4 sm:h-5 sm:w-5 fill-current" />
                 <div className="absolute inset-0 rounded-xl shimmer opacity-30" />
               </div>
               <span className="text-lg sm:text-xl font-bold tracking-tight text-gray-800 dark:text-gray-100">
@@ -122,13 +124,19 @@ export function Navbar({
 
             <div className="hidden lg:flex items-center bg-white/70 dark:bg-white/10 rounded-full p-1 border border-gray-200/80 dark:border-white/10 backdrop-blur-sm shadow-xs">
               {navLinks.map((item) => (
-                <a
+                <button
                   key={item.label}
-                  href={item.href}
-                  className="px-4 py-2 text-sm font-bold text-gray-800 dark:text-gray-200 hover:text-coral dark:hover:text-white rounded-full transition-colors"
+                  onClick={() => {
+                    if (item.label === "Rankings" && onRankingsOpen) {
+                      onRankingsOpen();
+                    } else if (item.href) {
+                      window.location.href = item.href;
+                    }
+                  }}
+                  className="px-4 py-2 text-sm font-bold text-gray-800 dark:text-gray-200 hover:text-coral dark:hover:text-white rounded-full transition-colors cursor-pointer"
                 >
                   {item.label}
-                </a>
+                </button>
               ))}
             </div>
 
@@ -191,7 +199,7 @@ export function Navbar({
               {isLoggedIn ? (
                 <button
                   onClick={onProfileOpen}
-                  className="hidden sm:flex items-center justify-center h-9 w-9 sm:h-10 sm:w-10 rounded-xl bg-gradient-to-br from-coral/85 to-violet/85 text-white font-bold text-sm shadow-sm hover:scale-105 transition-transform"
+                  className="hidden sm:flex items-center justify-center h-9 w-9 sm:h-10 sm:w-10 rounded-xl bg-gray-900 dark:bg-white text-white dark:text-gray-900 font-black text-sm shadow-sm hover:scale-105 transition-transform"
                   aria-label="Open profile"
                 >
                   {user?.avatar || user?.username?.slice(0, 2).toUpperCase() || "JD"}

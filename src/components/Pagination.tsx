@@ -53,10 +53,10 @@ export function Pagination({
           onClick={() => onPageChange(currentPage - 1)}
           disabled={currentPage === 1}
           className={cn(
-            "flex items-center gap-1 px-3 py-2 rounded-xl text-xs sm:text-sm font-bold border transition-all shadow-xs",
+            "flex items-center gap-1 px-3 py-2 rounded-xl text-xs sm:text-sm font-black border transition-all shadow-xs",
             currentPage === 1
               ? "opacity-40 cursor-not-allowed bg-gray-100 text-gray-400 border-gray-200 dark:bg-white/5 dark:text-gray-500 dark:border-white/10"
-              : "bg-white/80 dark:bg-white/10 text-gray-800 dark:text-gray-200 hover:bg-white dark:hover:bg-white/20 border-gray-200/80 dark:border-white/10 hover:text-coral"
+              : "bg-white/80 dark:bg-white/10 text-gray-950 dark:text-gray-100 hover:bg-white dark:hover:bg-white/20 border-gray-200/80 dark:border-white/10 hover:text-coral"
           )}
           aria-label="Previous page"
         >
@@ -82,7 +82,7 @@ export function Pagination({
               className={cn(
                 "h-9 w-9 sm:h-10 sm:w-10 rounded-xl text-xs sm:text-sm font-extrabold transition-all border flex items-center justify-center shadow-xs",
                 isActive
-                  ? "bg-coral text-white border-coral shadow-md scale-105"
+                  ? "bg-coral text-gray-950 font-black border-coral shadow-md scale-105"
                   : "bg-white/80 dark:bg-white/10 text-gray-800 dark:text-gray-200 hover:bg-white dark:hover:bg-white/20 border-gray-200/80 dark:border-white/10 hover:text-coral"
               )}
             >
@@ -96,10 +96,10 @@ export function Pagination({
           onClick={() => onPageChange(currentPage + 1)}
           disabled={currentPage === totalPages}
           className={cn(
-            "flex items-center gap-1 px-3 py-2 rounded-xl text-xs sm:text-sm font-bold border transition-all shadow-xs",
+            "flex items-center gap-1 px-3 py-2 rounded-xl text-xs sm:text-sm font-black border transition-all shadow-xs",
             currentPage === totalPages
               ? "opacity-40 cursor-not-allowed bg-gray-100 text-gray-400 border-gray-200 dark:bg-white/5 dark:text-gray-500 dark:border-white/10"
-              : "bg-white/80 dark:bg-white/10 text-gray-800 dark:text-gray-200 hover:bg-white dark:hover:bg-white/20 border-gray-200/80 dark:border-white/10 hover:text-coral"
+              : "bg-white/80 dark:bg-white/10 text-gray-950 dark:text-gray-100 hover:bg-white dark:hover:bg-white/20 border-gray-200/80 dark:border-white/10 hover:text-coral"
           )}
           aria-label="Next page"
         >

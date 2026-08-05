@@ -1,11 +1,16 @@
 import { Film, Tv, Music, Mic2, ChevronRight } from "lucide-react";
 import { cn } from "../utils/cn";
 import { useScrollReveal } from "../hooks/useScrollReveal";
+import type { Category } from "../types";
 
-export function CategoryShowcase() {
+interface CategoryShowcaseProps {
+  onSelectCategory?: (category: Category) => void;
+}
+
+export function CategoryShowcase({ onSelectCategory }: CategoryShowcaseProps) {
   const { ref, visible } = useScrollReveal<HTMLDivElement>();
 
-  const items = [
+  const items: { title: Category; icon: React.ReactNode; gradient: string; bg: string; count: string; iconStyle: string }[] = [
     { title: "Movies", icon: <Film className="w-7 h-7" />, gradient: "from-coral to-rose-500", bg: "bg-coral/10", count: "4,200+", iconStyle: "bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 border-rose-200 dark:border-rose-800/30" },
     { title: "Series", icon: <Tv className="w-7 h-7" />, gradient: "from-violet to-purple-600", bg: "bg-violet/10", count: "3,150+", iconStyle: "bg-violet-50 dark:bg-violet-900/20 text-violet-600 dark:text-violet-400 border-violet-200 dark:border-violet-800/30" },
     { title: "Songs", icon: <Music className="w-7 h-7" />, gradient: "from-teal to-cyan-600", bg: "bg-teal/10", count: "2,800+", iconStyle: "bg-cyan-50 dark:bg-cyan-900/20 text-cyan-600 dark:text-cyan-400 border-cyan-200 dark:border-cyan-800/30" },
@@ -26,7 +31,7 @@ export function CategoryShowcase() {
             Explore every corner of <span className="text-gradient">pop culture</span>
           </h2>
           <p className="text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
-            Whether you are into blockbuster films, binge-worthy shows, chart-topping hits, or thought-provoking podcasts — we have got you covered.
+            Whether you are into blockbuster films, binge-worthy shows, chart-topping hits, or thought-provoking podcasts — click any category to filter.
           </p>
         </div>
 
@@ -34,8 +39,9 @@ export function CategoryShowcase() {
           {items.map((item, i) => (
             <div
               key={item.title}
+              onClick={() => onSelectCategory?.(item.title)}
               className={cn(
-                "group glass-card rounded-3xl p-6 text-center transition-all duration-700",
+                "group glass-card rounded-3xl p-6 text-center transition-all duration-300 cursor-pointer hover:scale-[1.03] hover:shadow-2xl border hover:border-coral/50",
                 visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
               )}
               style={{ transitionDelay: `${i * 80}ms` }}
@@ -50,9 +56,9 @@ export function CategoryShowcase() {
               </div>
               <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-1">{item.title}</h3>
               <p className="text-sm text-gray-500 dark:text-gray-400 font-medium mb-4">{item.count} reviews</p>
-              <button className="inline-flex items-center gap-1 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:text-coral transition-colors">
+              <button className="inline-flex items-center gap-1 text-sm font-semibold text-gray-700 dark:text-gray-300 group-hover:text-coral transition-colors">
                 Browse {item.title}
-                <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+                <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </button>
             </div>
           ))}

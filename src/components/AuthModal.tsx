@@ -2,6 +2,7 @@ import { useState } from "react";
 import { X, Mail, Lock, LogIn, UserPlus } from "lucide-react";
 import { cn } from "../utils/cn";
 import { useAuth } from "../hooks/useAuth";
+import { useLockBodyScroll } from "../hooks/useLockBodyScroll";
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -17,6 +18,8 @@ export function AuthModal({ isOpen, onClose, defaultMode = "signin" }: AuthModal
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
   const { login, signup } = useAuth();
+
+  useLockBodyScroll(isOpen);
 
   if (!isOpen) return null;
 
@@ -51,8 +54,15 @@ export function AuthModal({ isOpen, onClose, defaultMode = "signin" }: AuthModal
   };
 
   return (
-    <div className="fixed inset-0 z-[80] flex items-center justify-center p-4 modal-overlay modal-overlay-animate">
-      <div className="w-full max-w-md max-h-[90vh] overflow-y-auto rounded-3xl glass-strong shadow-2xl modal-animate p-6 sm:p-8">
+    <div
+      className="fixed inset-0 z-[80] flex items-center justify-center p-4 modal-overlay modal-overlay-animate bg-black/40 backdrop-blur-xs"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) {
+          onClose();
+        }
+      }}
+    >
+      <div className="w-full max-w-md max-h-[90vh] overflow-y-auto rounded-3xl glass-strong shadow-2xl modal-animate p-6 sm:p-8 overscroll-contain">
         <div className="flex items-center justify-between mb-6">
           <div>
             <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">

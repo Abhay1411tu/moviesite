@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { Film, Tv, Music, Mic2, Star, Heart, Bookmark, Clock, ArrowRight } from "lucide-react";
 import { cn } from "../utils/cn";
 import { useScrollReveal } from "../hooks/useScrollReveal";
@@ -13,7 +14,21 @@ interface ReviewCardProps {
   onClick: () => void;
 }
 
-export function ReviewCard({
+const CATEGORY_COLORS: Record<string, string> = {
+  Movies: "text-coral bg-coral/10 border-coral/20",
+  Series: "text-violet bg-violet/10 border-violet/20",
+  Songs: "text-teal bg-teal/10 border-teal/20",
+  Podcasts: "text-amber-600 bg-amber/10 border-amber/20",
+};
+
+const CATEGORY_ICONS: Record<string, React.ReactNode> = {
+  Movies: <Film className="w-3.5 h-3.5" />,
+  Series: <Tv className="w-3.5 h-3.5" />,
+  Songs: <Music className="w-3.5 h-3.5" />,
+  Podcasts: <Mic2 className="w-3.5 h-3.5" />,
+};
+
+export const ReviewCard = memo(function ReviewCard({
   review,
   liked,
   saved,
@@ -23,27 +38,14 @@ export function ReviewCard({
 }: ReviewCardProps) {
   const { ref, visible } = useScrollReveal<HTMLDivElement>();
 
-  const categoryColors: Record<string, string> = {
-    Movies: "text-coral bg-coral/10 border-coral/20",
-    Series: "text-violet bg-violet/10 border-violet/20",
-    Songs: "text-teal bg-teal/10 border-teal/20",
-    Podcasts: "text-amber-600 bg-amber/10 border-amber/20",
-  };
-
-  const categoryIcons: Record<string, React.ReactNode> = {
-    Movies: <Film className="w-3.5 h-3.5" />,
-    Series: <Tv className="w-3.5 h-3.5" />,
-    Songs: <Music className="w-3.5 h-3.5" />,
-    Podcasts: <Mic2 className="w-3.5 h-3.5" />,
-  };
-
   return (
     <div
       ref={ref}
       className={cn(
-        "group rounded-3xl glass-card overflow-hidden flex flex-col h-full transition-all duration-700 hover:shadow-2xl hover:-translate-y-1",
+        "group rounded-3xl glass-card overflow-hidden flex flex-col h-full",
         visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
       )}
+      style={{ transitionDuration: "400ms" }}
     >
       {/* Cover Artwork */}
       <div
@@ -54,18 +56,18 @@ export function ReviewCard({
           src={review.imageUrl}
           alt={review.title}
           category={review.category}
-          className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+          className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-black/20" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
 
         <div className="absolute top-3 left-3 sm:top-4 sm:left-4 z-10">
           <span
             className={cn(
-              "inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] sm:text-xs font-bold border backdrop-blur-md shadow-md",
-              categoryColors[review.category]
+              "inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] sm:text-xs font-bold border backdrop-blur-sm shadow-md",
+              CATEGORY_COLORS[review.category]
             )}
           >
-            {categoryIcons[review.category]}
+            {CATEGORY_ICONS[review.category]}
             {review.category}
           </span>
         </div>
@@ -77,9 +79,9 @@ export function ReviewCard({
               onLike();
             }}
             className={cn(
-              "p-2 sm:p-2.5 rounded-full backdrop-blur-md border transition-all active:scale-90 shadow-md",
+              "p-2 sm:p-2.5 rounded-full backdrop-blur-sm border transition-all duration-150 active:scale-90 shadow-md",
               liked
-                ? "bg-white text-coral border-white shadow-md"
+                ? "bg-white text-coral border-white"
                 : "bg-black/40 text-white border-white/30 hover:bg-black/60"
             )}
             aria-label="Like"
@@ -92,9 +94,9 @@ export function ReviewCard({
               onSave();
             }}
             className={cn(
-              "p-2 sm:p-2.5 rounded-full backdrop-blur-md border transition-all active:scale-90 shadow-md",
+              "p-2 sm:p-2.5 rounded-full backdrop-blur-sm border transition-all duration-150 active:scale-90 shadow-md",
               saved
-                ? "bg-white text-violet border-white shadow-md"
+                ? "bg-white text-violet border-white"
                 : "bg-black/40 text-white border-white/30 hover:bg-black/60"
             )}
             aria-label="Save"
@@ -119,7 +121,7 @@ export function ReviewCard({
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 sm:gap-3 mb-2">
           <h3
             onClick={onClick}
-            className="text-base sm:text-lg font-bold text-gray-900 dark:text-gray-100 line-clamp-1 cursor-pointer group-hover:text-coral transition-colors min-w-0"
+            className="text-base sm:text-lg font-bold text-gray-900 dark:text-gray-100 line-clamp-1 cursor-pointer group-hover:text-coral transition-colors duration-150 min-w-0"
           >
             {review.title}
           </h3>
@@ -154,12 +156,13 @@ export function ReviewCard({
 
         <button
           onClick={onClick}
-          className="w-full mt-auto flex items-center justify-center gap-2 py-2.5 sm:py-3 rounded-xl text-xs sm:text-sm font-bold text-white bg-gray-900 hover:bg-coral dark:bg-white/15 dark:text-white dark:hover:bg-coral shadow-sm hover:shadow-md transition-all group/btn"
+          className="w-full mt-auto flex items-center justify-center gap-2 py-2.5 sm:py-3 rounded-xl text-xs sm:text-sm font-bold text-white bg-gray-900 hover:bg-coral dark:bg-white/15 dark:text-white dark:hover:bg-coral shadow-sm hover:shadow-md transition-colors duration-150 group/btn"
         >
           Read Review
-          <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 group-hover/btn:translate-x-1 transition-transform" />
+          <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 group-hover/btn:translate-x-1 transition-transform duration-150" />
         </button>
       </div>
     </div>
   );
-}
+});
+

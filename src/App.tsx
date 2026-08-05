@@ -10,6 +10,7 @@ import { ProfileModal } from "./components/ProfileModal";
 import { Collections } from "./components/Collections";
 import { CollectionsModal } from "./components/CollectionsModal";
 import { Leaderboard } from "./components/Leaderboard";
+import { RankingsModal } from "./components/RankingsModal";
 import { CategoryShowcase } from "./components/CategoryShowcase";
 import { Newsletter } from "./components/Newsletter";
 import { Footer } from "./components/Footer";
@@ -23,6 +24,8 @@ import { ThemeProvider } from "./hooks/useTheme";
 import { AuthProvider } from "./hooks/useAuth";
 import { REVIEWS, SAMPLE_USER_REVIEWS } from "./data/reviews";
 import type { Review, UserReview, FilterState, Toast as ToastType, Category, DiaryEntry, UserList } from "./types";
+
+import { dbService } from "./services/db";
 
 function AppContent() {
   const [filters, setFilters] = useState<FilterState>({
@@ -66,6 +69,7 @@ function AppContent() {
   const [pendingListReviewId, setPendingListReviewId] = useState<number | null>(null);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [isCollectionsModalOpen, setIsCollectionsModalOpen] = useState(false);
+  const [isRankingsOpen, setIsRankingsOpen] = useState(false);
   const [navSearch, setNavSearch] = useState("");
 
   const [userReviews, setUserReviews] = useState<UserReview[]>(SAMPLE_USER_REVIEWS);
@@ -74,24 +78,44 @@ function AppContent() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const timer = setTimeout(() => setLoading(false), 800);
-    return () => clearTimeout(timer);
+    dbService.init().then(async () => {
+      try {
+        const dbLikes = await dbService.getUserState<number[]>("likes", []);
+        if (dbLikes.length > 0) setLikes(new Set(dbLikes));
+
+        const dbSaved = await dbService.getUserState<number[]>("saved", []);
+        if (dbSaved.length > 0) setSaved(new Set(dbSaved));
+
+        const dbDiary = await dbService.getDiary();
+        if (dbDiary.length > 0) setDiary(dbDiary);
+
+        const dbLists = await dbService.getLists();
+        if (dbLists.length > 0) setLists(dbLists);
+
+        const dbUserReviews = await dbService.getUserReviews();
+        setUserReviews(dbUserReviews);
+      } catch (err) {
+        console.error("Database load error:", err);
+      } finally {
+        setLoading(false);
+      }
+    });
   }, []);
 
   useEffect(() => {
-    localStorage.setItem("popcritic-likes", JSON.stringify([...likes]));
+    dbService.setUserState("likes", [...likes]);
   }, [likes]);
 
   useEffect(() => {
-    localStorage.setItem("popcritic-saved", JSON.stringify([...saved]));
+    dbService.setUserState("saved", [...saved]);
   }, [saved]);
 
   useEffect(() => {
-    localStorage.setItem("popcritic-diary", JSON.stringify(diary));
+    dbService.setUserState("diary", diary);
   }, [diary]);
 
   useEffect(() => {
-    localStorage.setItem("popcritic-lists", JSON.stringify(lists));
+    dbService.setUserState("lists", lists);
   }, [lists]);
 
   const addToast = useCallback((message: string, type: ToastType["type"] = "info") => {
@@ -161,7 +185,7 @@ function AppContent() {
     return result;
   }, [filters]);
 
-  const ITEMS_PER_PAGE = 20;
+  const ITEMS_PER_PAGE = 12;
   const [currentPage, setCurrentPage] = useState(1);
 
   // Reset page to 1 whenever filters change
@@ -176,58 +200,60 @@ function AppContent() {
     return filteredReviews.slice(start, start + ITEMS_PER_PAGE);
   }, [filteredReviews, currentPage]);
 
-  const handlePageChange = (page: number) => {
+  const handlePageChange = useCallback((page: number) => {
     setCurrentPage(page);
     const reviewsElement = document.getElementById("reviews");
     if (reviewsElement) {
       reviewsElement.scrollIntoView({ behavior: "smooth" });
     }
-  };
+  }, []);
 
-  const toggleLike = (id: number) => {
+  const toggleLike = useCallback((id: number) => {
+    const isLiked = likes.has(id);
     setLikes((prev) => {
       const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else {
-        next.add(id);
-        addToast("Added to liked", "success");
-      }
+      if (isLiked) next.delete(id);
+      else next.add(id);
       return next;
     });
-  };
+    if (isLiked) {
+      addToast("Removed from liked", "info");
+    } else {
+      addToast("Added to liked", "success");
+    }
+  }, [likes, addToast]);
 
-  const toggleSave = (id: number) => {
+  const toggleSave = useCallback((id: number) => {
+    const isSaved = saved.has(id);
     setSaved((prev) => {
       const next = new Set(prev);
-      if (next.has(id)) {
-        next.delete(id);
-        addToast("Removed from watchlist", "info");
-      } else {
-        next.add(id);
-        addToast("Saved to watchlist", "success");
-      }
+      if (isSaved) next.delete(id);
+      else next.add(id);
       return next;
     });
-  };
+    if (isSaved) {
+      addToast("Removed from watchlist", "info");
+    } else {
+      addToast("Saved to watchlist", "success");
+    }
+  }, [saved, addToast]);
 
-  const openReview = (review: Review) => {
+  const openReview = useCallback((review: Review) => {
     setSelectedReview(review);
     setIsReviewModalOpen(true);
-  };
+  }, []);
 
-  const closeReview = () => {
+  const closeReview = useCallback(() => {
     setIsReviewModalOpen(false);
     setTimeout(() => setSelectedReview(null), 200);
-  };
+  }, []);
 
   const toggleDiary = (id: number) => {
+    const exists = diary.some((e) => e.reviewId === id);
     setDiary((prev) => {
-      const exists = prev.find((e) => e.reviewId === id);
       if (exists) {
-        addToast("Removed from diary", "info");
         return prev.filter((e) => e.reviewId !== id);
       }
-      addToast("Marked as watched", "success");
       return [
         {
           id: Date.now(),
@@ -238,6 +264,12 @@ function AppContent() {
         ...prev,
       ];
     });
+
+    if (exists) {
+      addToast("Removed from diary", "info");
+    } else {
+      addToast("Marked as watched", "success");
+    }
   };
 
   const rateDiaryEntry = (entryId: number, rating: number) => {
@@ -280,12 +312,30 @@ function AppContent() {
 
   const handleAddUserReview = (review: UserReview) => {
     setUserReviews((prev) => [review, ...prev]);
+    dbService.addUserReview(review);
     addToast("Review posted successfully!", "success");
+  };
+
+  const handleDeleteUserReview = (id: number) => {
+    setUserReviews((prev) => prev.filter((r) => r.id !== id));
+    dbService.deleteUserReview(id);
+    addToast("Review deleted", "info");
   };
 
   const handleSubscribe = (email: string, categories: Category[]) => {
     localStorage.setItem("popcritic-subscription", JSON.stringify({ email, categories, date: new Date().toISOString() }));
     addToast(`Subscribed! We'll send ${categories.join(", ")} picks to ${email}`, "success");
+  };
+
+  const handleTagClick = (tag: string) => {
+    closeReview();
+    setFilters((f) => ({ ...f, genre: tag, search: "", category: "All" }));
+    setCurrentPage(1);
+    setTimeout(() => {
+      const reviewsEl = document.getElementById("reviews");
+      if (reviewsEl) reviewsEl.scrollIntoView({ behavior: "smooth" });
+    }, 300);
+    addToast(`Showing results for #${tag}`, "info");
   };
 
   const clearFilters = () => {
@@ -315,6 +365,7 @@ function AppContent() {
         onDiaryOpen={() => setIsDiaryOpen(true)}
         onListsOpen={() => { setPendingListReviewId(null); setIsListsOpen(true); }}
         onAuthOpen={() => setIsAuthOpen(true)}
+        onRankingsOpen={() => setIsRankingsOpen(true)}
       />
 
       <main>
@@ -394,10 +445,21 @@ function AppContent() {
         />
 
         <div id="leaderboard">
-          <Leaderboard />
+          <Leaderboard
+            onRankingsOpen={() => setIsRankingsOpen(true)}
+            onReviewClick={openReview}
+          />
         </div>
 
-        <CategoryShowcase />
+        <CategoryShowcase
+          onSelectCategory={(category) => {
+            setFilters((f) => ({ ...f, category, genre: "All", search: "" }));
+            setCurrentPage(1);
+            const reviewsEl = document.getElementById("reviews");
+            if (reviewsEl) reviewsEl.scrollIntoView({ behavior: "smooth" });
+            addToast(`Filtered by category: ${category}`, "info");
+          }}
+        />
 
         <Newsletter onSubscribe={handleSubscribe} />
       </main>
@@ -419,6 +481,7 @@ function AppContent() {
         onToggleDiary={toggleDiary}
         onAddToList={handleAddToListFromModal}
         onRequiresAuth={() => setIsAuthOpen(true)}
+        onTagClick={handleTagClick}
       />
 
       <AuthModal
@@ -489,6 +552,25 @@ function AppContent() {
         savedIds={saved}
         diary={diary}
         lists={lists}
+        onDeleteUserReview={handleDeleteUserReview}
+        onRemoveLike={(id) => toggleLike(id)}
+        onRemoveSave={(id) => toggleSave(id)}
+        onRemoveDiary={(id) => {
+          setDiary((prev) => prev.filter((e) => e.id !== id));
+          addToast("Removed from diary", "info");
+        }}
+        onDeleteList={(id) => deleteList(id)}
+      />
+
+      <RankingsModal
+        isOpen={isRankingsOpen}
+        onClose={() => setIsRankingsOpen(false)}
+        reviews={REVIEWS}
+        onReviewClick={openReview}
+        likedIds={likes}
+        savedIds={saved}
+        onToggleLike={toggleLike}
+        onToggleSave={toggleSave}
       />
 
       <ToastContainer toasts={toasts} onRemove={removeToast} />

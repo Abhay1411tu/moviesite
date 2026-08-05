@@ -3,6 +3,7 @@ import { X, Film, Tv, Music, Mic2, Search, ArrowRight, Star, Layers, ChevronLeft
 import { cn } from "../utils/cn";
 import { COLLECTIONS, REVIEWS } from "../data/reviews";
 import { MediaImage } from "./MediaImage";
+import { useLockBodyScroll } from "../hooks/useLockBodyScroll";
 import type { Category, Review, EditorialCollection } from "../types";
 
 interface CollectionsModalProps {
@@ -62,17 +63,12 @@ export function CollectionsModal({
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCollection, setSelectedCollection] = useState<EditorialCollection | null>(null);
 
+  useLockBodyScroll(isOpen);
+
   useEffect(() => {
-    if (typeof document === "undefined") return;
-    if (isOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
+    if (!isOpen) {
       setSelectedCollection(null);
     }
-    return () => {
-      document.body.style.overflow = "";
-    };
   }, [isOpen]);
 
   const filteredCollections = useMemo(() => {
@@ -98,7 +94,7 @@ export function CollectionsModal({
       />
 
       {/* Modal Container — fully opaque, no glass */}
-      <div className="relative z-10 w-full max-w-6xl h-[90vh] flex flex-col rounded-3xl overflow-hidden shadow-2xl border border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-900">
+      <div className="relative z-10 w-full max-w-6xl h-[90vh] flex flex-col rounded-3xl overflow-hidden shadow-2xl border border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-900 overscroll-contain">
 
         {/* ── HEADER ── */}
         <div className="flex-none flex items-start sm:items-center justify-between gap-4 p-6 sm:p-8 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
